@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>課題チェック表</title>
+<!-- データ埋め込みタグ（「このファイルに保存」するとここにデータが入る） -->
+<script id="cd-data" type="application/json">{}</script>
+<style>
+  :root {
+    --bg: #1a1816;
+    --panel: #242120;
+    --line: #3a3633;
+    --text: #f0ece4;
+    --sub: #9a948c;
+    --accent: #e8a33d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+    padding: 16px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0 0 4px;
+    letter-spacing: 0.02em;
+  }
+  .sub {
+    color: var(--sub);
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .summary {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 14px;
+    flex-wrap: wrap;
+  }
+  .summary .big {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .summary .label {
+    font-size: 12px;
+    color: var(--sub);
+  }
+  .today-summary {
+    font-size: 12px;
+    color: var(--accent);
+    margin-left: 6px;
+  }
+  .scroll-today-btn {
+    margin-left: auto;
+    background: var(--bg);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  button {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button:active { background: #2e2a27; }
+  button.danger { color: #e07a5f; border-color: #5a3a32; }
+  button.primary { background: var(--accent); color: #1a1410; border: none; font-weight: 600; }
+  #reorderBtn.active {
+    background: var(--accent);
+    color: #1a1410;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .settings-panel {
+    background: rgba(255,255,255,0.02);
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 10px 10px 2px;
+    margin-bottom: 12px;
+  }
+  #settingsToggleBtn.active {
+    background: var(--accent);
+    color: #1a1410;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .col-set-label {
+    font-size: 13px;
+    color: var(--sub);
+  }
+  .count-input, .date-input {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  .count-input { width: 60px; }
+  .preset-toolbar {
+    margin-top: -4px;
+  }
+  .preset-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .preset-chip .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .import-box {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 14px;
+  }
+  .import-box textarea {
+    width: 100%;
+    height: 90px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 11px;
+    font-family: monospace;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  .import-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .scroll-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+  }
+  table {
+    border-collapse: collapse;
+    min-width: 100%;
+  }
+  th, td {
+    border-bottom: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    text-align: center;
+    padding: 0;
+  }
+
+  /* 色ヘッダー（横方向、上に固定） */
+  th.color-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--panel);
+    padding: 6px 6px;
+    min-width: 64px;
+    vertical-align: top;
+  }
+  .color-head-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex-wrap: wrap;
+  }
+  .swatch {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .name-input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    width: 32px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    padding: 0;
+  }
+  .note-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--line);
+    color: var(--sub);
+    width: 100%;
+    font-size: 9px;
+    text-align: center;
+    padding: 1px 0;
+    margin-top: 2px;
+  }
+  .note-input:focus {
+    outline: none;
+    border-bottom-color: var(--accent);
+  }
+  .row-count {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .row-tried-count {
+    color: var(--sub);
+    font-weight: 600;
+    font-size: 9px;
+    margin-left: 3px;
+  }
+  .progress-track {
+    height: 4px;
+    background: #3a3633;
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.25s;
+  }
+  .color-actions {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 3px;
+  }
+  .move-btn {
+    color: var(--sub);
+    font-size: 11px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .move-btn:active { color: var(--accent); }
+  .move-btn.hidden { display: none; }
+  .del-row, .del-col {
+    color: var(--sub);
+    font-size: 11px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  /* 日付/課題ヘッダー（縦方向、左に固定） */
+  .corner {
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    background: #2a2724;
+  }
+  th.date-head {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #2a2724;
+    padding: 6px 8px;
+    min-width: 72px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .date-head .col-date {
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .date-head .col-weekday {
+    font-size: 10px;
+    margin-left: 3px;
+  }
+  .col-weekday.sun { color: #e85d4d; }
+  .col-weekday.sat { color: #3d8be8; }
+  .date-head .col-count {
+    font-size: 10px;
+    color: var(--accent);
+    font-weight: 700;
+    margin-left: 4px;
+  }
+  .date-head .today-tag {
+    display: inline-block;
+    font-size: 8px;
+    color: var(--accent);
+    font-weight: 700;
+    margin-right: 3px;
+  }
+
+  /* 今日の行を強調（横全体） */
+  th.today-row, td.today-row {
+    border-top: 2px solid var(--accent);
+    border-bottom: 2px solid var(--accent);
+  }
+  th.today-row {
+    background: #3a3020;
+  }
+
+  .cell {
+    width: 46px;
+    height: 44px;
+    cursor: pointer;
+  }
+  .cell .box {
+    width: 30px;
+    height: 30px;
+    margin: 0 auto;
+    border-radius: 6px;
+    border: 1.5px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: transparent;
+  }
+  .cell.checked .box {
+    border-width: 0;
+    color: #1a1410;
+  }
+  .cell.tried .box {
+    border-style: dashed;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .footer {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--sub);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .saved-flash {
+    flex: 1;
+    min-width: 100%;
+    order: 3;
+    color: var(--sub);
+    font-size: 12px;
+  }
+
+  /* ─── レポートカード ─── */
+  .report-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.78);
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .report-overlay.show { display: flex; }
+  .report-card {
+    width: 100%;
+    max-width: 360px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: linear-gradient(160deg, #2a2724, #181613);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 24px 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  .report-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .report-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-bottom: 2px;
+  }
+  .report-emoji { font-size: 22px; }
+  .report-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .report-period {
+    text-align: center;
+    font-size: 11px;
+    color: var(--sub);
+    margin-bottom: 16px;
+  }
+  .report-total {
+    text-align: center;
+    margin: 6px 0 18px;
+  }
+  .report-total-num {
+    font-size: 46px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .report-total-label {
+    font-size: 12px;
+    color: var(--sub);
+    margin-top: 2px;
+  }
+  .report-today {
+    background: rgba(232, 163, 61, 0.08);
+    border: 1px solid rgba(232, 163, 61, 0.3);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .report-stats-row {
+    display: flex;
+    justify-content: space-around;
+    margin: 4px 0 16px;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .report-stat {
+    text-align: center;
+    flex: 1;
+  }
+  .report-stat-num {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .report-stat-label {
+    font-size: 10px;
+    color: var(--sub);
+    margin-top: 2px;
+  }
+  .report-trend {
+    margin: 4px 0 18px;
+  }
+  .report-trend-label {
+    font-size: 11px;
+    color: var(--sub);
+    margin-bottom: 8px;
+  }
+  .report-trend-row {
+    display: flex;
+    gap: 5px;
+  }
+  .trend-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .trend-val {
+    font-size: 9px;
+    color: var(--text);
+    font-weight: 700;
+    min-height: 11px;
+  }
+  .trend-bar-track {
+    width: 100%;
+    max-width: 20px;
+    height: 40px;
+    background: #3a3633;
+    border-radius: 3px;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+  .trend-bar-fill {
+    width: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+  .trend-day {
+    font-size: 8px;
+    color: var(--sub);
+  }
+  .report-today-label {
+    font-size: 11px;
+    color: var(--sub);
+  }
+  .report-today-num {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .report-today-unit {
+    font-size: 13px;
+    color: var(--sub);
+    margin-left: 2px;
+  }
+  .report-rule-bar {
+    height: 6px;
+    background: #3a3633;
+    border-radius: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .report-rule-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+  .report-rule-label {
+    font-size: 10px;
+    color: var(--sub);
+    margin-top: 4px;
+  }
+  .report-colors {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .report-color-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .report-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .report-color-name {
+    flex-shrink: 0;
+    min-width: 50px;
+    font-weight: 600;
+  }
+  .report-color-note {
+    color: var(--sub);
+    font-weight: 400;
+    font-size: 10px;
+  }
+  .report-color-count {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    min-width: 36px;
+    text-align: right;
+  }
+  .report-tried-count {
+    color: var(--sub);
+    font-weight: 600;
+    font-size: 9px;
+    margin-left: 3px;
+  }
+  .report-color-bar {
+    flex: 1;
+    height: 6px;
+    background: #3a3633;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .report-color-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+  .report-footer {
+    text-align: center;
+    font-size: 10px;
+    color: var(--sub);
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🧗 課題チェック表</h1>
+<div class="sub">タップで 空欄→✓完登→△トライ→空欄 の順に切り替わるで。自動でこのブラウザに保存されるで。「📁このファイルに保存」すれば、ファイル自体にもデータが残るから一番安心やで。</div>
+
+<div class="summary">
+  <span class="big" id="totalCount">0</span>
+  <span class="label">本 完登</span>
+  <span class="today-summary" id="todaySummary"></span>
+  <button class="scroll-today-btn" onclick="scrollToToday()">📍今日へ</button>
+</div>
+
+<div class="toolbar">
+  <button class="primary" onclick="openReport()">📊 レポート作成</button>
+  <button id="settingsToggleBtn" onclick="toggleSettingsPanel()">⚙ 表編集</button>
+</div>
+
+<div id="settingsPanel" class="settings-panel" style="display:none;">
+  <div class="toolbar">
+    <button class="primary" onclick="addColumn()">＋日付/課題を追加</button>
+    <button onclick="addRow()">＋色（列）を追加</button>
+    <button class="danger" onclick="resetAll()">全部リセット</button>
+    <button id="reorderBtn" onclick="toggleReorderMode()">↔ 並び替え</button>
+    <button onclick="sortStandardOrder()">易→難に並び替え</button>
+  </div>
+  <div class="toolbar preset-toolbar" id="presetToolbar"></div>
+
+  <div class="toolbar">
+    <span class="col-set-label">開始日</span>
+    <input type="date" id="startDateInput" class="date-input">
+    <button class="primary" onclick="fillDates()">日付を自動入力</button>
+    <button onclick="clearDates()">日付を消す</button>
+  </div>
+  <div class="toolbar">
+    <span class="col-set-label">課題数を</span>
+    <input type="number" id="colCountInput" class="count-input" min="1" max="200">
+    <span class="col-set-label">個に設定</span>
+    <button class="primary" onclick="setColCount()">設定する</button>
+  </div>
+  <div class="toolbar">
+    <button onclick="exportData()">📋 データを書き出す</button>
+    <button onclick="toggleImportBox()">📥 データを読み込む</button>
+  </div>
+  <div id="importBox" class="import-box" style="display:none;">
+    <textarea id="importTextarea" placeholder="ここにコピーしたデータを貼り付けてな"></textarea>
+    <div class="import-actions">
+      <button class="primary" onclick="importData()">読み込む</button>
+      <button onclick="toggleImportBox()">閉じる</button>
+    </div>
+  </div>
+  <div id="exportBox" class="import-box" style="display:none;">
+    <textarea id="exportTextarea" readonly></textarea>
+    <div class="import-actions">
+      <button onclick="copyExportText()">コピーする</button>
+      <button onclick="document.getElementById('exportBox').style.display='none'">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-wrap">
+  <table id="grid"></table>
+</div>
+
+<div class="footer">
+  <button onclick="manualSave()">💾 今すぐ保存</button>
+  <button id="fileSaveBtn" onclick="saveToFile()">📁 このファイルに保存</button>
+  <span class="saved-flash" id="savedFlash">保存したで✓</span>
+</div>
+
+<div class="report-overlay" id="reportOverlay">
+  <div class="report-card" id="reportCard"></div>
+  <div class="report-actions">
+    <button class="primary" onclick="downloadReportImage()">🖼️ 画像で保存</button>
+    <button onclick="closeReport()">閉じる</button>
+  </div>
+</div>
+
+<script>
+const DEFAULT_COLORS = [
+  { name: "緑", hex: "#3fae4d" },
+  { name: "黄", hex: "#e8d44d" },
+  { name: "橙", hex: "#e8893d" },
+  { name: "紫", hex: "#9b59b6" },
+  { name: "青", hex: "#3d8be8" },
+  { name: "赤", hex: "#e85d4d" },
+];
+const STANDARD_ORDER = [
+  { name: "白", hex: "#f0ece4" },
+  { name: "緑", hex: "#3fae4d" },
+  { name: "黄", hex: "#e8d44d" },
+  { name: "橙", hex: "#e8893d" },
+  { name: "紫", hex: "#9b59b6" },
+  { name: "青", hex: "#3d8be8" },
+  { name: "赤", hex: "#e85d4d" },
+  { name: "茶", hex: "#8b5a2b" },
+  { name: "黒", hex: "#2a2724" },
+];
+
+const STORAGE_KEY = "boulder_grid_v3";
+const OLD_KEYS = ["boulder_grid_v2", "boulder_grid_v1"];
+const DB_NAME = "BoulderChecklistDB";
+const DB_VER = 1;
+const DB_STORE = "state";
+const DB_KEY = "current";
+
+let state = null;
+let reorderMode = false;
+let _db = null;
+let _fileHandle = null; // File System Access API のファイルハンドル
+
+// ─── IndexedDB（メインの保存先。localStorageより頑丈で容量も大きい） ───
+function openDB() {
+  return new Promise((ok, ng) => {
+    if (_db) { ok(_db); return; }
+    let req;
+    try { req = indexedDB.open(DB_NAME, DB_VER); }
+    catch (e) { ng(e); return; }
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+    };
+    req.onsuccess = e => {
+      _db = e.target.result;
+      _db.onversionchange = () => { try { _db.close(); } catch (_) {} _db = null; };
+      ok(_db);
+    };
+    req.onerror = e => ng(e.target.error || new Error("DB open error"));
+    req.onblocked = () => ng(new Error("DB blocked"));
+  });
+}
+async function dbGet(key) {
+  const db = await openDB();
+  return new Promise((ok, ng) => {
+    try {
+      const tx = db.transaction(DB_STORE, "readonly");
+      const r = tx.objectStore(DB_STORE).get(key);
+      r.onsuccess = e => ok(e.target.result);
+      r.onerror = e => ng(e.target.error);
+    } catch (e) { ng(e); }
+  });
+}
+async function dbPut(key, value) {
+  const db = await openDB();
+  return new Promise((ok, ng) => {
+    try {
+      const tx = db.transaction(DB_STORE, "readwrite");
+      tx.objectStore(DB_STORE).put(value, key);
+      tx.oncomplete = ok;
+      tx.onerror = e => ng(e.target.error);
+      tx.onabort = e => ng(e.target.error || new Error("aborted"));
+    } catch (e) { ng(e); }
+  });
+}
+
+// 旧バージョン互換：Claudeアーティファクト内のwindow.storage、または素のlocalStorage
+const hasArtifactStorage = (typeof window !== "undefined")
+  && window.storage
+  && typeof window.storage.set === "function"
+  && typeof window.storage.get === "function";
+
+async function legacyGet(key) {
+  if (hasArtifactStorage) {
+    try { return await window.storage.get(key, false); } catch (e) { return null; }
+  }
+  try {
+    const v = localStorage.getItem(key);
+    return v !== null ? { value: v } : null;
+  } catch (e) { return null; }
+}
+
+function defaultState() {
+  return {
+    rows: DEFAULT_COLORS.map(c => ({ name: c.name, hex: c.hex, note: "" })),
+    colCount: 32,
+    colDates: [],
+    checked: {}
+  };
+}
+
+function normalizeState() {
+  if (!state.colDates) state.colDates = [];
+  if (!state.rows) state.rows = [];
+  state.rows.forEach(row => { if (row.note === undefined) row.note = ""; });
+}
+
+async function loadState() {
+  // ① このHTMLファイル自体に書き込まれたデータ（「ファイルに保存」したファイルを開いた場合）
+  try {
+    const tag = document.getElementById("cd-data");
+    if (tag && tag.textContent.trim()) {
+      const parsed = JSON.parse(tag.textContent);
+      if (parsed && Array.isArray(parsed.rows)) {
+        state = parsed;
+        normalizeState();
+        return;
+      }
+    }
+  } catch (e) { console.error("cd-data parse failed", e); }
+
+  // ② IndexedDB（このブラウザでの自動保存分）
+  try {
+    const fromDb = await dbGet(DB_KEY);
+    if (fromDb) {
+      state = typeof fromDb === "string" ? JSON.parse(fromDb) : fromDb;
+      normalizeState();
+      return;
+    }
+  } catch (e) { console.error("IndexedDB read failed", e); }
+
+  // ③ 旧バージョン（window.storage / localStorage）からの引き継ぎ
+  try {
+    const res = await legacyGet(STORAGE_KEY);
+    if (res && res.value) {
+      state = JSON.parse(res.value);
+      normalizeState();
+      return;
+    }
+  } catch (e) { /* not found */ }
+  for (const key of OLD_KEYS) {
+    try {
+      const old = await legacyGet(key);
+      if (old && old.value) {
+        state = JSON.parse(old.value);
+        normalizeState();
+        return;
+      }
+    } catch (e) { /* not found */ }
+  }
+
+  state = defaultState();
+}
+
+let saveTimer = null;
+let saveInFlight = false;
+let pendingSaveAfter = false;
+let lastError = null;
+
+function setStatus(text, color) {
+  const el = document.getElementById("savedFlash");
+  el.textContent = text;
+  el.style.color = color;
+}
+
+function saveState() {
+  setStatus("未保存…", "var(--sub)");
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { doSave(); }, 350);
+}
+
+function manualSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  setStatus("保存中…", "var(--sub)");
+  doSave();
+}
+
+async function doSave(retryCount = 0) {
+  if (saveInFlight) {
+    pendingSaveAfter = true;
+    return;
+  }
+  saveInFlight = true;
+  setStatus("保存中…", "var(--sub)");
+  try {
+    await dbPut(DB_KEY, JSON.stringify(state));
+    lastError = null;
+    setStatus("保存したで✓（このブラウザに保存）", "var(--accent)");
+    // すでにファイル保存先を選んでたら、そこにも静かに上書きしとく
+    autoSaveToFile();
+  } catch (e) {
+    console.error("保存失敗", e);
+    lastError = (e && e.message) ? e.message : String(e);
+    if (retryCount < 2) {
+      setTimeout(() => doSave(retryCount + 1), 700);
+    } else {
+      setStatus(`保存失敗: ${lastError}（💾で再試行してな）`, "#e07a5f");
+    }
+  } finally {
+    saveInFlight = false;
+    if (pendingSaveAfter) {
+      pendingSaveAfter = false;
+      setTimeout(() => doSave(), 300);
+    }
+  }
+}
+
+// ─── ファイル本体への保存（File System Access API。climbdiaryと同じ仕組み） ───
+function buildSaveHTML(tmpl) {
+  const data = JSON.stringify(state).replace(/<\/script/gi, "<\\/script");
+  const open = '<script id="cd-data" type="application/json">';
+  const close = "<" + "/" + "script>";
+  const si = tmpl.indexOf(open);
+  const ei = tmpl.indexOf(close, si);
+  if (si < 0 || ei <= si) return null;
+  return tmpl.slice(0, si + open.length) + data + tmpl.slice(ei);
+}
+
+async function writeToHandle(handle, html) {
+  const writable = await handle.createWritable();
+  await writable.write(html);
+  await writable.close();
+}
+
+async function saveToFile() {
+  const tmpl = window._htmlSrc;
+  if (!tmpl) { setStatus("保存元のHTMLが取れんかった…", "#e07a5f"); return; }
+  const html = buildSaveHTML(tmpl);
+  if (!html) { setStatus("保存失敗：データ埋め込み位置が見つからん", "#e07a5f"); return; }
+
+  if (window.showSaveFilePicker) {
+    try {
+      if (!_fileHandle) {
+        _fileHandle = await window.showSaveFilePicker({
+          suggestedName: "boulder-checklist.html",
+          types: [{ description: "HTML file", accept: { "text/html": [".html"] } }]
+        });
+      }
+      await writeToHandle(_fileHandle, html);
+      window._htmlSrc = html;
+      setStatus("📁 ファイルに保存したで✓", "var(--accent)");
+      updateFileSaveBtnLabel();
+    } catch (e) {
+      if (e.name !== "AbortError") setStatus("ファイル保存失敗: " + e.message, "#e07a5f");
+      _fileHandle = null;
+    }
+  } else {
+    // File System Access APIが無いブラウザはダウンロードにフォールバック
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "boulder-checklist.html";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 300);
+    window._htmlSrc = html;
+    setStatus("📁 ダウンロードしたで✓（このブラウザはファイル直書き未対応）", "var(--accent)");
+  }
+}
+
+// すでにファイル保存先を選んでたら、変更ごとに静かに上書き
+async function autoSaveToFile() {
+  if (!_fileHandle || !window._htmlSrc) return;
+  const html = buildSaveHTML(window._htmlSrc);
+  if (!html) return;
+  try {
+    await writeToHandle(_fileHandle, html);
+    window._htmlSrc = html;
+  } catch (e) {
+    console.error("autoSaveToFile failed", e);
+    _fileHandle = null;
+    updateFileSaveBtnLabel();
+  }
+}
+
+function updateFileSaveBtnLabel() {
+  const btn = document.getElementById("fileSaveBtn");
+  if (!btn) return;
+  btn.textContent = _fileHandle ? "📁 保存済み（自動保存ON）" : "📁 このファイルに保存";
+}
+
+function isoDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function todayIso() { return isoDate(new Date()); }
+
+function extendDatesIfNeeded(newCount) {
+  if (!state.colDates || state.colDates.length === 0) return;
+  let cursor = new Date(state.colDates[state.colDates.length - 1] + "T00:00:00");
+  for (let c = state.colDates.length; c < newCount; c++) {
+    cursor = new Date(cursor);
+    cursor.setDate(cursor.getDate() + 1);
+    state.colDates.push(isoDate(cursor));
+  }
+}
+
+function isDone(val) { return val === "done" || val === true; }
+function isTried(val) { return val === "tried"; }
+
+function rowCheckedCount(r) {
+  let n = 0;
+  for (let c = 0; c < state.colCount; c++) {
+    if (isDone(state.checked[r + "_" + c])) n++;
+  }
+  return n;
+}
+function rowTriedCount(r) {
+  let n = 0;
+  for (let c = 0; c < state.colCount; c++) {
+    if (isTried(state.checked[r + "_" + c])) n++;
+  }
+  return n;
+}
+function colCheckedCount(c) {
+  let n = 0;
+  state.rows.forEach((_, r) => { if (isDone(state.checked[r + "_" + c])) n++; });
+  return n;
+}
+function totalCheckedCount() {
+  return Object.values(state.checked).filter(isDone).length;
+}
+
+function isLight(hex) {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 150;
+}
+
+function render() {
+  const table = document.getElementById("grid");
+  table.innerHTML = "";
+
+  // ヘッダー行：左上の角 + 色ごとのヘッダー（横並び）
+  const thead = document.createElement("tr");
+  const corner = document.createElement("th");
+  corner.className = "corner";
+  thead.appendChild(corner);
+
+  state.rows.forEach((row, r) => {
+    const th = document.createElement("th");
+    th.className = "color-head";
+    const count = rowCheckedCount(r);
+    const triedCount = rowTriedCount(r);
+    const pct = state.colCount > 0 ? Math.round((count / state.colCount) * 100) : 0;
+    th.innerHTML = `
+      <div class="color-head-top">
+        <input type="color" class="swatch" value="${row.hex}" onchange="recolorRow(${r}, this.value)">
+        <input class="name-input" value="${row.name}" onchange="renameRow(${r}, this.value)">
+      </div>
+      <div class="row-count">${count}${triedCount > 0 ? `<span class="row-tried-count">△${triedCount}</span>` : ""}</div>
+      <input class="note-input" value="${row.note || ""}" placeholder="級など" onchange="renameNote(${r}, this.value)">
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${pct}%; background:${row.hex}"></div>
+      </div>
+      <div class="color-actions">
+        <span class="move-btn ${reorderMode ? "" : "hidden"}" onclick="moveRow(${r}, -1)">◀</span>
+        <span class="del-row" onclick="deleteRow(${r})">×</span>
+        <span class="move-btn ${reorderMode ? "" : "hidden"}" onclick="moveRow(${r}, 1)">▶</span>
+      </div>`;
+    thead.appendChild(th);
+  });
+  table.appendChild(thead);
+
+  // データ行：1行＝1課題/1日。縦に並ぶ
+  for (let c = 0; c < state.colCount; c++) {
+    const tr = document.createElement("tr");
+    const th = document.createElement("th");
+    th.className = "date-head";
+    const cCount = colCheckedCount(c);
+    const dateStr = state.colDates[c];
+    const isToday = dateStr === todayIso();
+    let dateHtml = `<span class="col-date">${c + 1}</span>`;
+    if (dateStr) {
+      const d = new Date(dateStr + "T00:00:00");
+      const md = `${d.getMonth() + 1}/${d.getDate()}`;
+      const wd = ["日","月","火","水","木","金","土"][d.getDay()];
+      const wdClass = d.getDay() === 0 ? "sun" : d.getDay() === 6 ? "sat" : "";
+      dateHtml = `<span class="col-date">${md}</span><span class="col-weekday ${wdClass}">${wd}</span>`;
+    }
+    if (isToday) th.classList.add("today-row");
+    th.innerHTML = `${isToday ? '<span class="today-tag">今日</span>' : ""}${dateHtml}
+      <span class="col-count">${cCount > 0 ? cCount : ""}</span>
+      <span class="del-col" onclick="deleteColumn(${c})">×</span>`;
+    tr.appendChild(th);
+
+    state.rows.forEach((row, r) => {
+      const td = document.createElement("td");
+      td.className = "cell";
+      if (isToday) td.classList.add("today-row");
+      const key = r + "_" + c;
+      const val = state.checked[key];
+      if (isDone(val)) {
+        td.classList.add("checked");
+        const textColor = isLight(row.hex) ? "#1a1410" : "#f0ece4";
+        td.innerHTML = `<div class="box" style="background:${row.hex}; color:${textColor}">✓</div>`;
+      } else if (isTried(val)) {
+        td.classList.add("tried");
+        td.innerHTML = `<div class="box tried-box" style="border-color:${row.hex}; color:${row.hex}">△</div>`;
+      } else {
+        td.innerHTML = `<div class="box"></div>`;
+      }
+      td.onclick = () => toggleCell(r, c);
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  }
+
+  document.getElementById("totalCount").textContent = totalCheckedCount();
+
+  const todayIdx = state.colDates.indexOf(todayIso());
+  const todaySummaryEl = document.getElementById("todaySummary");
+  todaySummaryEl.textContent = todayIdx !== -1 ? `今日: ${colCheckedCount(todayIdx)}本` : "";
+
+  const colInput = document.getElementById("colCountInput");
+  if (colInput && document.activeElement !== colInput) {
+    colInput.value = state.colCount;
+  }
+}
+
+function scrollToToday() {
+  const todayTh = document.querySelector("th.today-row");
+  if (!todayTh) {
+    alert("日付が入ってへんか、今日の日付が表に無いみたいやで");
+    return;
+  }
+  todayTh.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+}
+function scrollToTodaySilent() {
+  const todayTh = document.querySelector("th.today-row");
+  if (todayTh) todayTh.scrollIntoView({ behavior: "auto", block: "center", inline: "nearest" });
+}
+
+function toggleCell(r, c) {
+  const key = r + "_" + c;
+  const cur = state.checked[key];
+  if (!cur) {
+    state.checked[key] = "done"; // 空欄 → 完登（✓）
+  } else if (isDone(cur)) {
+    state.checked[key] = "tried"; // 完登 → トライ（△）
+  } else {
+    delete state.checked[key]; // トライ → 空欄
+  }
+  render();
+  saveState();
+}
+
+function fillDates() {
+  const input = document.getElementById("startDateInput");
+  if (!input.value) { alert("開始日を選んでな"); return; }
+  const start = new Date(input.value + "T00:00:00");
+  const dates = [];
+  for (let c = 0; c < state.colCount; c++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + c);
+    dates.push(isoDate(d));
+  }
+  state.colDates = dates;
+  render();
+  saveState();
+}
+function clearDates() {
+  state.colDates = [];
+  render();
+  saveState();
+}
+
+function exportData() {
+  const box = document.getElementById("exportBox");
+  const ta = document.getElementById("exportTextarea");
+  ta.value = JSON.stringify(state);
+  box.style.display = "block";
+  document.getElementById("importBox").style.display = "none";
+  ta.focus();
+  ta.select();
+}
+function copyExportText() {
+  const ta = document.getElementById("exportTextarea");
+  ta.select();
+  try {
+    document.execCommand("copy");
+    setStatus("コピーしたで✓ どっかにメモっといてな", "var(--accent)");
+  } catch (e) {
+    setStatus("自動コピーでけへんかった…自分で選択してコピーしてな", "#e07a5f");
+  }
+}
+function toggleImportBox() {
+  const box = document.getElementById("importBox");
+  const isHidden = box.style.display === "none";
+  box.style.display = isHidden ? "block" : "none";
+  document.getElementById("exportBox").style.display = "none";
+}
+function importData() {
+  const text = document.getElementById("importTextarea").value.trim();
+  if (!text) return;
+  try {
+    const parsed = JSON.parse(text);
+    if (!parsed.rows || !Array.isArray(parsed.rows)) throw new Error("形が違うで");
+    if (!parsed.colDates) parsed.colDates = [];
+    state = parsed;
+    normalizeState();
+    document.getElementById("importBox").style.display = "none";
+    render();
+    setStatus("読み込んだで✓（保存はまだやから💾も押してな）", "var(--accent)");
+  } catch (e) {
+    alert("読み込めへんかった…貼り付けた内容を確認してな\n" + e.message);
+  }
+}
+
+function addColumn() {
+  state.colCount += 1;
+  extendDatesIfNeeded(state.colCount);
+  render();
+  saveState();
+}
+
+function setColCount() {
+  const input = document.getElementById("colCountInput");
+  let n = parseInt(input.value, 10);
+  if (isNaN(n) || n < 1) n = 1;
+  if (n > 200) n = 200;
+  if (n < state.colCount) {
+    const newChecked = {};
+    Object.keys(state.checked).forEach(key => {
+      const [r, col] = key.split("_").map(Number);
+      if (col < n) newChecked[key] = true;
+    });
+    state.checked = newChecked;
+  }
+  state.colCount = n;
+  if (state.colDates && state.colDates.length > n) {
+    state.colDates = state.colDates.slice(0, n);
+  } else {
+    extendDatesIfNeeded(n);
+  }
+  render();
+  saveState();
+}
+
+function deleteColumn(c) {
+  if (state.colCount <= 1) return;
+  const cCount = colCheckedCount(c);
+  if (cCount > 0 && !confirm(`この課題、${cCount}本チェック入ってるで。ほんまに消す?`)) return;
+  state.colCount -= 1;
+  const newChecked = {};
+  Object.keys(state.checked).forEach(key => {
+    const [r, col] = key.split("_").map(Number);
+    if (col === c) return;
+    const newCol = col > c ? col - 1 : col;
+    newChecked[r + "_" + newCol] = true;
+  });
+  state.checked = newChecked;
+  if (state.colDates && state.colDates.length) state.colDates.splice(c, 1);
+  render();
+  saveState();
+}
+
+function addRow() {
+  state.rows.push({ name: "新色", hex: "#888888", note: "" });
+  render();
+  saveState();
+}
+
+function renderPresetToolbar() {
+  const box = document.getElementById("presetToolbar");
+  if (!box) return;
+  box.innerHTML = STANDARD_ORDER.map(c =>
+    `<span class="preset-chip" onclick="addPresetRow('${c.name}', '${c.hex}')">
+      <span class="dot" style="background:${c.hex}; border:1px solid var(--line)"></span>${c.name}
+    </span>`
+  ).join("");
+}
+function addPresetRow(name, hex) {
+  state.rows.push({ name, hex, note: "" });
+  render();
+  saveState();
+}
+function sortStandardOrder() {
+  const orderIndex = name => {
+    const idx = STANDARD_ORDER.findIndex(c => c.name === name);
+    return idx === -1 ? 999 : idx;
+  };
+  const oldRows = state.rows.map((row, i) => ({ row, oldIndex: i }));
+  oldRows.sort((a, b) => orderIndex(a.row.name) - orderIndex(b.row.name));
+  const newChecked = {};
+  oldRows.forEach((item, newIndex) => {
+    for (let c = 0; c < state.colCount; c++) {
+      const key = item.oldIndex + "_" + c;
+      if (state.checked[key]) newChecked[newIndex + "_" + c] = true;
+    }
+  });
+  state.rows = oldRows.map(item => item.row);
+  state.checked = newChecked;
+  render();
+  saveState();
+}
+
+function toggleSettingsPanel() {
+  const panel = document.getElementById("settingsPanel");
+  const btn = document.getElementById("settingsToggleBtn");
+  const isHidden = panel.style.display === "none";
+  panel.style.display = isHidden ? "block" : "none";
+  btn.classList.toggle("active", isHidden);
+}
+
+function toggleReorderMode() {
+  reorderMode = !reorderMode;
+  document.getElementById("reorderBtn").classList.toggle("active", reorderMode);
+  render();
+}
+
+function moveRow(r, dir) {
+  const target = r + dir;
+  if (target < 0 || target >= state.rows.length) return;
+  const tmp = state.rows[r];
+  state.rows[r] = state.rows[target];
+  state.rows[target] = tmp;
+  const newChecked = {};
+  Object.keys(state.checked).forEach(key => {
+    const [row, col] = key.split("_").map(Number);
+    let newRow = row;
+    if (row === r) newRow = target;
+    else if (row === target) newRow = r;
+    newChecked[newRow + "_" + col] = true;
+  });
+  state.checked = newChecked;
+  render();
+  saveState();
+}
+
+function deleteRow(r) {
+  const count = rowCheckedCount(r);
+  const label = state.rows[r] ? state.rows[r].name : "";
+  if (!confirm(`「${label}」を消すで。${count > 0 ? count + "本のチェックも一緒に消えるで。" : ""}ほんまにいい?`)) return;
+  state.rows.splice(r, 1);
+  const newChecked = {};
+  Object.keys(state.checked).forEach(key => {
+    const [row, col] = key.split("_").map(Number);
+    if (row === r) return;
+    const newRow = row > r ? row - 1 : row;
+    newChecked[newRow + "_" + col] = true;
+  });
+  state.checked = newChecked;
+  render();
+  saveState();
+}
+
+function renameRow(r, name) {
+  state.rows[r].name = name;
+  saveState();
+}
+function renameNote(r, note) {
+  state.rows[r].note = note;
+  saveState();
+}
+function recolorRow(r, hex) {
+  state.rows[r].hex = hex;
+  render();
+  saveState();
+}
+
+// ─── レポート作成 ───
+function fmtJpDate(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function doneCountForDate(dateStr) {
+  let n = 0;
+  state.colDates.forEach((d, c) => { if (d === dateStr) n += colCheckedCount(c); });
+  return n;
+}
+
+function computeReportStats() {
+  const total = totalCheckedCount();
+  const totalTried = Object.values(state.checked).filter(isTried).length;
+  const successRate = (total + totalTried) > 0 ? Math.round((total / (total + totalTried)) * 100) : null;
+
+  const todayIdx = state.colDates.indexOf(todayIso());
+  const todayCount = todayIdx !== -1 ? colCheckedCount(todayIdx) : null;
+
+  const perColor = state.rows.map((row, r) => {
+    const count = rowCheckedCount(r);
+    const tried = rowTriedCount(r);
+    const pct = state.colCount > 0 ? Math.round((count / state.colCount) * 100) : 0;
+    return { name: row.name, hex: row.hex, note: row.note, count, tried, pct };
+  });
+
+  let bestColor = null;
+  perColor.forEach(c => {
+    if (c.count > 0 && (!bestColor || c.count > bestColor.count)) bestColor = c;
+  });
+
+  let firstLabel = null, lastLabel = null;
+  if (state.colDates && state.colDates.length) {
+    const checkedCols = new Set(Object.keys(state.checked).map(k => Number(k.split("_")[1])));
+    const checkedDates = [...checkedCols]
+      .map(c => state.colDates[c])
+      .filter(Boolean)
+      .sort();
+    if (checkedDates.length) {
+      firstLabel = checkedDates[0];
+      lastLabel = checkedDates[checkedDates.length - 1];
+    }
+  }
+
+  // 直近7日間のトレンド（日付が入ってる時だけ）
+  let last7 = null;
+  if (state.colDates && state.colDates.some(Boolean)) {
+    last7 = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const iso = isoDate(d);
+      last7.push({
+        label: ["日","月","火","水","木","金","土"][d.getDay()],
+        count: doneCountForDate(iso)
+      });
+    }
+  }
+
+  return { total, totalTried, successRate, todayCount, perColor, bestColor, firstLabel, lastLabel, last7 };
+}
+
+function openReport() {
+  const stats = computeReportStats();
+  const card = document.getElementById("reportCard");
+
+  const periodHtml = stats.firstLabel
+    ? `<div class="report-period">${fmtJpDate(stats.firstLabel)} 〜 ${fmtJpDate(stats.lastLabel)} の記録</div>`
+    : `<div class="report-period">${todayIso().replace(/-/g, "/")} 時点</div>`;
+
+  const statsRowHtml = `
+    <div class="report-stats-row">
+      <div class="report-stat">
+        <div class="report-stat-num">${stats.successRate !== null ? stats.successRate + "%" : "—"}</div>
+        <div class="report-stat-label">完登率</div>
+      </div>
+      <div class="report-stat">
+        <div class="report-stat-num">${stats.totalTried}</div>
+        <div class="report-stat-label">トライ△</div>
+      </div>
+      <div class="report-stat">
+        <div class="report-stat-num" style="color:${stats.bestColor ? stats.bestColor.hex : "var(--text)"}">${stats.bestColor ? stats.bestColor.name : "—"}</div>
+        <div class="report-stat-label">得意カラー</div>
+      </div>
+    </div>`;
+
+  const todayHtml = stats.todayCount !== null
+    ? `<div class="report-today">
+        <div class="report-today-label">今日の本数</div>
+        <div class="report-today-num">${stats.todayCount}<span class="report-today-unit">本</span></div>
+        <div class="report-rule-bar"><div class="report-rule-fill" style="width:${Math.min(100, Math.round(stats.todayCount / 30 * 100))}%"></div></div>
+        <div class="report-rule-label">30本ルール: ${stats.todayCount}/30</div>
+      </div>`
+    : "";
+
+  let trendHtml = "";
+  if (stats.last7) {
+    const max = Math.max(1, ...stats.last7.map(d => d.count));
+    trendHtml = `
+      <div class="report-trend">
+        <div class="report-trend-label">直近7日</div>
+        <div class="report-trend-row">
+          ${stats.last7.map(d => `
+            <div class="trend-item">
+              <div class="trend-val">${d.count > 0 ? d.count : ""}</div>
+              <div class="trend-bar-track"><div class="trend-bar-fill" style="height:${d.count > 0 ? Math.max(8, Math.round(d.count / max * 100)) : 0}%"></div></div>
+              <div class="trend-day">${d.label}</div>
+            </div>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  const colorRows = stats.perColor.map(c => `
+    <div class="report-color-row">
+      <span class="report-dot" style="background:${c.hex}"></span>
+      <span class="report-color-name">${c.name}${c.note ? ` <span class="report-color-note">(${c.note})</span>` : ""}</span>
+      <div class="report-color-bar"><div class="report-color-fill" style="width:${c.pct}%; background:${c.hex}"></div></div>
+      <span class="report-color-count">${c.count}本${c.tried > 0 ? `<span class="report-tried-count">△${c.tried}</span>` : ""}</span>
+    </div>`).join("");
+
+  card.innerHTML = `
+    <div class="report-header">
+      <span class="report-emoji">🧗</span>
+      <span class="report-title">ボルダリングレポート</span>
+    </div>
+    ${periodHtml}
+    <div class="report-total">
+      <div class="report-total-num">${stats.total}</div>
+      <div class="report-total-label">本 完登</div>
+    </div>
+    ${statsRowHtml}
+    ${todayHtml}
+    ${trendHtml}
+    <div class="report-colors">${colorRows}</div>
+    <div class="report-footer">${todayIso().replace(/-/g, "/")} 作成</div>
+  `;
+
+  document.getElementById("reportOverlay").classList.add("show");
+}
+
+function closeReport() {
+  document.getElementById("reportOverlay").classList.remove("show");
+}
+
+let _h2cLoaded = false;
+function loadHtml2Canvas() {
+  return new Promise((resolve, reject) => {
+    if (_h2cLoaded && window.html2canvas) { resolve(); return; }
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+    script.onload = () => { _h2cLoaded = true; resolve(); };
+    script.onerror = () => reject(new Error("ネットがつながってへんかも"));
+    document.head.appendChild(script);
+  });
+}
+
+async function downloadReportImage() {
+  const card = document.getElementById("reportCard");
+  try {
+    await loadHtml2Canvas();
+    const canvas = await window.html2canvas(card, { backgroundColor: "#181613", scale: 2 });
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `boulder-report-${todayIso()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (e) {
+    alert("画像の作成に失敗したで…ネット環境が必要かもしれん\n" + e.message);
+  }
+}
+
+function resetAll() {
+  if (!confirm("ほんまに全部消すで？元に戻せへんで。")) return;
+  state = defaultState();
+  render();
+  saveState();
+}
+
+(async function init() {
+  // このファイル自体のHTML（cd-dataタグはまだ初期値"{}"の状態）をテンプレとして保持
+  // → 後で「ファイルに保存」する時、ここのデータ部分だけ書き換えて使う
+  window._htmlSrc = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+  await loadState();
+  render();
+  renderPresetToolbar();
+  updateFileSaveBtnLabel();
+  const startInput = document.getElementById("startDateInput");
+  if (startInput && !startInput.value) startInput.value = todayIso();
+  setTimeout(scrollToTodaySilent, 100);
+})();
+</script>
+
+</body>
+</html>
